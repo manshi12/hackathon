@@ -5,7 +5,7 @@
 email-agent-dashboard/
 ├── mvp_agent.py          # Your existing email agent
 ├── api_server.py         # FastAPI backend (new)
-├── dashboard.html        # React dashboard (new)
+├── index.html        # React dashboard (new)
 ├── requirements.txt      # Python dependencies (new)
 ├── .env                  # Environment variables
 ├── vip_senders.json      # VIP senders list
@@ -93,11 +93,6 @@ You have several options to serve the HTML dashboard:
 **Option A: Simple HTTP Server (Python)**
 ```bash
 python -m http.server 3000
-```
-
-**Option B: Node.js serve**
-```bash
-npx serve -s . -l 3000
 ```
 
 **Option C: Open directly in browser**
