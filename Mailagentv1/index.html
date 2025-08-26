@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Agent Dashboard</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .dashboard {
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .navbar {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h1 {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-running {
+            background: rgba(34, 197, 94, 0.2);
+            color: #16a34a;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        
+        .status-stopped {
+            background: rgba(239, 68, 68, 0.2);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .main-content {
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .full-width {
+            grid-column: span 2;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card h2 {
+            color: white;
+            margin-bottom: 1rem;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        .button-primary {
+            background: rgba(34, 197, 94, 0.3);
+            border-color: rgba(34, 197, 94, 0.5);
+        }
+        
+        .button-danger {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+        
+        .email-list {
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .email-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .email-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .email-from {
+            color: white;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .email-subject {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            margin: 0.25rem 0;
+        }
+        
+        .email-meta {
+            display: flex;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        
+        .tag {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .tag-high { background: rgba(239, 68, 68, 0.3); color: #fca5a5; }
+        .tag-normal { background: rgba(107, 114, 128, 0.3); color: #d1d5db; }
+        .tag-urgent { background: rgba(245, 158, 11, 0.3); color: #fbbf24; }
+        .tag-business { background: rgba(59, 130, 246, 0.3); color: #93c5fd; }
+        
+        .email-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        
+        .button-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .input-group label {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .input-group input, .input-group select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            padding: 0.5rem;
+            color: white;
+            font-size: 0.9rem;
+        }
+        
+        .input-group input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const API_BASE = 'http://localhost:8000/api';
+
+        // Icon components using SVG
+        const Play = ({ size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" />
+            </svg>
+        );
+
+        const Pause = ({ size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="14" y="3" width="5" height="18" rx="1" />
+                <rect x="5" y="3" width="5" height="18" rx="1" />
+            </svg>
+        );
+
+        const RefreshCw = ({ size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                <path d="M8 16H3v5" />
+            </svg>
+        );
+
+        const Settings = ({ size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915" />
+                <circle cx="12" cy="12" r="3" />
+            </svg>
+        );
+
+        const Mail = ({ size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+            </svg>
+        );
+
+        const BarChart3 = ({ size = 24 }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                <path d="M18 17V9" />
+                <path d="M13 17V5" />
+                <path d="M8 17v-3" />
+            </svg>
+        );
+
+        // API functions
+        const api = {
+            async getStatus() {
+                const res = await fetch(`${API_BASE}/status`);
+                return res.json();
+            },
+            async getConfig() {
+                const res = await fetch(`${API_BASE}/config`);
+                return res.json();
+            },
+            async updateConfig(config) {
+                const res = await fetch(`${API_BASE}/config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                return res.json();
+            },
+            async startAgent() {
+                const res = await fetch(`${API_BASE}/agent/start`, { method: 'POST' });
+                return res.json();
+            },
+            async stopAgent() {
+                const res = await fetch(`${API_BASE}/agent/stop`, { method: 'POST' });
+                return res.json();
+            },
+            async getPendingEmails() {
+                const res = await fetch(`${API_BASE}/emails/pending`);
+                return res.json();
+            },
+            async handlePendingEmail(emailId, action) {
+                const res = await fetch(`${API_BASE}/emails/pending/${emailId}/action`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(action)
+                });
+                return res.json();
+            },
+            async getAnalytics() {
+                const res = await fetch(`${API_BASE}/analytics/stats`);
+                return res.json();
+            },
+            async runTestCycle() {
+                const res = await fetch(`${API_BASE}/agent/test-cycle`, { method: 'POST' });
+                return res.json();
+            }
+        };
+
+        function Dashboard() {
+            const [status, setStatus] = useState(null);
+            const [config, setConfig] = useState(null);
+            const [pendingEmails, setPendingEmails] = useState([]);
+            const [analytics, setAnalytics] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const chartRef = useRef(null);
+
+            const loadData = async () => {
+                try {
+                    const [statusData, configData, pendingData, analyticsData] = await Promise.all([
+                        api.getStatus(),
+                        api.getConfig(),
+                        api.getPendingEmails(),
+                        api.getAnalytics()
+                    ]);
+                    setStatus(statusData);
+                    setConfig(configData);
+                    setPendingEmails(pendingData);
+                    setAnalytics(analyticsData);
+                } catch (error) {
+                    console.error('Failed to load data:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            useEffect(() => {
+                loadData();
+                const interval = setInterval(loadData, 5000); // Refresh every 5 seconds
+                return () => clearInterval(interval);
+            }, []);
+
+            useEffect(() => {
+                if (analytics && chartRef.current) {
+                    const ctx = chartRef.current.getContext('2d');
+                    
+                    // Destroy existing chart
+                    if (window.emailChart) {
+                        window.emailChart.destroy();
+                    }
+
+                    window.emailChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                            datasets: [{
+                                label: 'Emails Processed',
+                                data: analytics.by_hour,
+                                borderColor: 'rgba(34, 197, 94, 0.8)',
+                                backgroundColor: 'rgba(34, 197, 94, 0.2)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: 'rgba(255, 255, 255, 0.8)' }
+                                },
+                                x: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: 'rgba(255, 255, 255, 0.8)' }
+                                }
+                            },
+                            plugins: {
+                                legend: { labels: { color: 'rgba(255, 255, 255, 0.9)' } }
+                            }
+                        }
+                    });
+                }
+            }, [analytics]);
+
+            const handleAgentToggle = async () => {
+                try {
+                    if (status?.is_running) {
+                        await api.stopAgent();
+                    } else {
+                        await api.startAgent();
+                    }
+                    loadData();
+                } catch (error) {
+                    console.error('Failed to toggle agent:', error);
+                }
+            };
+
+            const handlePendingAction = async (emailId, action) => {
+                try {
+                    await api.handlePendingEmail(emailId, action);
+                    loadData();
+                } catch (error) {
+                    console.error('Failed to handle email action:', error);
+                }
+            };
+
+            const handleTestCycle = async () => {
+                try {
+                    await api.runTestCycle();
+                    loadData();
+                } catch (error) {
+                    console.error('Failed to run test cycle:', error);
+                }
+            };
+
+            if (loading) {
+                return (
+                    <div className="dashboard">
+                        <div className="loading">
+                            <div className="spinner"></div>
+                            Loading dashboard...
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="dashboard">
+                    <nav className="navbar">
+                        <h1>📧 Email Agent Dashboard</h1>
+                        <div className={`status-badge ${status?.is_running ? 'status-running' : 'status-stopped'}`}>
+                            {status?.is_running ? <Play size={16} /> : <Pause size={16} />}
+                            {status?.is_running ? 'Running' : 'Stopped'}
+                        </div>
+                    </nav>
+
+                    <div className="main-content">
+                        {/* Statistics */}
+                        <div className="card full-width">
+                            <h2><BarChart3 size={20} />Statistics</h2>
+                            <div className="stats-grid">
+                                <div className="stat-card">
+                                    <div className="stat-value">{analytics?.processed_today || 0}</div>
+                                    <div className="stat-label">Processed Today</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{analytics?.sent_today || 0}</div>
+                                    <div className="stat-label">Sent Today</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{analytics?.pending_count || 0}</div>
+                                    <div className="stat-label">Pending Review</div>
+                                </div>
+                                <div className="stat-card">
+                                    <div className="stat-value">{analytics?.success_rate?.toFixed(1) || 0}%</div>
+                                    <div className="stat-label">Success Rate</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Agent Controls */}
+                        <div className="card">
+                            <h2><Settings size={20} />Agent Controls</h2>
+                            <div style={{display: 'flex', gap: '1rem', marginBottom: '1rem'}}>
+                                <button 
+                                    className={`button ${status?.is_running ? 'button-danger' : 'button-primary'}`}
+                                    onClick={handleAgentToggle}
+                                >
+                                    {status?.is_running ? <Pause size={16} /> : <Play size={16} />}
+                                    {status?.is_running ? 'Stop Agent' : 'Start Agent'}
+                                </button>
+                                <button className="button" onClick={handleTestCycle}>
+                                    <RefreshCw size={16} />
+                                    Test Cycle
+                                </button>
+                            </div>
+                            <div className="controls-grid">
+                                <div className="input-group">
+                                    <label>Poll Interval (seconds)</label>
+                                    <input 
+                                        type="number" 
+                                        value={config?.poll_seconds || 60}
+                                        onChange={(e) => setConfig({...config, poll_seconds: parseInt(e.target.value)})}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Max Emails per Cycle</label>
+                                    <input 
+                                        type="number" 
+                                        value={config?.max_emails_per_cycle || 10}
+                                        onChange={(e) => setConfig({...config, max_emails_per_cycle: parseInt(e.target.value)})}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Dry Run Mode</label>
+                                    <select 
+                                        value={config?.dry_run ? 'true' : 'false'}
+                                        onChange={(e) => setConfig({...config, dry_run: e.target.value === 'true'})}
+                                    >
+                                        <option value="true">Enabled</option>
+                                        <option value="false">Disabled</option>
+                                    </select>
+                                </div>
+                                <div className="input-group">
+                                    <label>Company Domain</label>
+                                    <input 
+                                        type="text" 
+                                        value={config?.company_domain || ''}
+                                        onChange={(e) => setConfig({...config, company_domain: e.target.value})}
+                                        placeholder="company.com"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Email Processing Chart */}
+                        <div className="card">
+                            <h2><BarChart3 size={20} />Email Processing (24h)</h2>
+                            <div className="chart-container">
+                                <canvas ref={chartRef}></canvas>
+                            </div>
+                        </div>
+
+                        {/* Pending Emails */}
+                        <div className="card full-width">
+                            <h2><Mail size={20} />Pending Review ({pendingEmails.length})</h2>
+                            {pendingEmails.length === 0 ? (
+                                <div style={{textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.6)'}}>
+                                    No emails pending review
+                                </div>
+                            ) : (
+                                <div className="email-list">
+                                    {pendingEmails.map((email) => (
+                                        <EmailItem 
+                                            key={email.id} 
+                                            email={email} 
+                                            onAction={(action) => handlePendingAction(email.id, action)}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function EmailItem({ email, onAction }) {
+            const [showDetails, setShowDetails] = useState(false);
+            const [modifyMode, setModifyMode] = useState(false);
+            const [replySubject, setReplySubject] = useState(email.ai_decision?.proposed_subject || '');
+            const [replyBody, setReplyBody] = useState(email.ai_decision?.proposed_body || '');
+
+            const handleModify = () => {
+                onAction({
+                    action: 'modify',
+                    reply_subject: replySubject,
+                    reply_body: replyBody
+                });
+                setModifyMode(false);
+            };
+
+            return (
+                <div className="email-item">
+                    <div className="email-header">
+                        <div style={{flex: 1}}>
+                            <div className="email-from">{email.from_addr}</div>
+                            <div className="email-subject">{email.subject}</div>
+                            <div className="email-meta">
+                                <span className={`tag tag-${email.importance}`}>{email.importance}</span>
+                                <span className={`tag tag-${email.category}`}>{email.category}</span>
+                            </div>
+                            <div style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'}}>
+                                Reason: {email.reason}
+                            </div>
+                        </div>
+                        <div>
+                            <button 
+                                className="button button-small" 
+                                onClick={() => setShowDetails(!showDetails)}
+                            >
+                                {showDetails ? 'Hide' : 'Details'}
+                            </button>
+                        </div>
+                    </div>
+
+                    {showDetails && (
+                        <div style={{marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.05)', borderRadius: '8px'}}>
+                            <div style={{marginBottom: '1rem'}}>
+                                <strong style={{color: 'rgba(255,255,255,0.9)'}}>Email Preview:</strong>
+                                <div style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginTop: '0.5rem'}}>
+                                    {email.body_preview}
+                                </div>
+                            </div>
+                            
+                            {modifyMode ? (
+                                <div>
+                                    <div className="input-group" style={{marginBottom: '1rem'}}>
+                                        <label>Reply Subject:</label>
+                                        <input 
+                                            type="text"
+                                            value={replySubject}
+                                            onChange={(e) => setReplySubject(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="input-group" style={{marginBottom: '1rem'}}>
+                                        <label>Reply Body:</label>
+                                        <textarea 
+                                            value={replyBody}
+                                            onChange={(e) => setReplyBody(e.target.value)}
+                                            rows={6}
+                                            style={{
+                                                background: 'rgba(255,255,255,0.1)',
+                                                border: '1px solid rgba(255,255,255,0.3)',
+                                                borderRadius: '6px',
+                                                padding: '0.5rem',
+                                                color: 'white',
+                                                fontSize: '0.9rem',
+                                                width: '100%',
+                                                resize: 'vertical'
+                                            }}
+                                        />
+                                    </div>
+                                    <div style={{display: 'flex', gap: '0.5rem'}}>
+                                        <button className="button button-primary button-small" onClick={handleModify}>
+                                            Send Modified
+                                        </button>
+                                        <button className="button button-small" onClick={() => setModifyMode(false)}>
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div style={{marginBottom: '1rem'}}>
+                                        <strong style={{color: 'rgba(255,255,255,0.9)'}}>Proposed Reply:</strong>
+                                        <div style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginTop: '0.5rem'}}>
+                                            <strong>Subject:</strong> {email.ai_decision?.proposed_subject}
+                                        </div>
+                                        <div style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginTop: '0.5rem', whiteSpace: 'pre-wrap'}}>
+                                            {email.ai_decision?.proposed_body}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {!modifyMode && (
+                        <div className="email-actions">
+                            <button 
+                                className="button button-primary button-small"
+                                onClick={() => onAction({action: 'approve'})}
+                            >
+                                ✓ Approve & Send
+                            </button>
+                            <button 
+                                className="button button-small"
+                                onClick={() => setModifyMode(true)}
+                            >
+                                ✏️ Modify
+                            </button>
+                            <button 
+                                className="button button-danger button-small"
+                                onClick={() => onAction({action: 'reject'})}
+                            >
+                                ✗ Reject
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
