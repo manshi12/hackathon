@@ -744,6 +744,14 @@
                     reply_body: replyBody,
                     maintain_thread: true
                 });
+                
+                // Update local email state to reflect changes immediately
+                email.ai_decision = {
+                    ...email.ai_decision,
+                    proposed_subject: replySubject,
+                    proposed_body: replyBody
+                };
+
                 setModifyMode(false);
             };
 
