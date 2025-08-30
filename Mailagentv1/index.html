@@ -711,7 +711,7 @@
                         <div className="card full-width">
                             <h2><Mail size={20} />Pending Review ({pendingEmails.length})</h2>
                             {pendingEmails.length === 0 ? (
-                                <div style={{textAlign: 'center', padding: '2rem', color: 'rgba(255,255,255,0.6)'}}>
+                                <div style={{textAlign: 'center', padding: '2rem', color: '#2563eb'}}>
                                     No emails pending review
                                 </div>
                             ) : (
@@ -759,7 +759,7 @@
                                 {email.is_thread_reply && <span className="tag tag-thread">Thread Reply</span>}
                                 {email.thread_context_used && <span className="tag tag-thread">Context Used</span>}
                             </div>
-                            <div style={{color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem'}}>
+                            <div style={{color: '#2563eb', fontSize: '0.8rem'}}>
                                 Reason: {email.reason}
                             </div>
                         </div>
